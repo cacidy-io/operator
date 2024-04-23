@@ -7,6 +7,32 @@ rules:
 - apiGroups:
   - cacidy.io
   resources:
+  - pipelinejobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cacidy.io
+  resources:
+  - pipelinejobs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cacidy.io
+  resources:
+  - pipelinejobs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cacidy.io
+  resources:
   - runners
   verbs:
   - create

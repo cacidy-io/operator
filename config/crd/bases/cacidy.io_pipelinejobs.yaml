@@ -4,19 +4,19 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: runners.cacidy.io
+  name: pipelinejobs.cacidy.io
 spec:
   group: cacidy.io
   names:
-    kind: Runner
-    listKind: RunnerList
-    plural: runners
-    singular: runner
+    kind: PipelineJob
+    listKind: PipelineJobList
+    plural: pipelinejobs
+    singular: pipelinejob
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.checksum
-      name: Checksum
+    - jsonPath: .spec.revision
+      name: Revision
       type: string
     - jsonPath: .status.state
       name: State
@@ -27,7 +27,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Runner is the Schema for the runners API
+        description: PipelineJob is the Schema for the pipelinejobs API
         properties:
           apiVersion:
             description: |-
@@ -47,7 +47,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: RunnerSpec defines the desired state of Runner
+            description: PipelineJobSpec defines the desired state of PipelineJob
             properties:
               application:
                 description: Application is the source application for the pipeline
@@ -72,36 +72,6 @@ spec:
                       rule: self == oldSelf
                 required:
                 - repository
-                type: object
-              engine:
-                default: {}
-                description: Engine is the pipeline runtime
-                properties:
-                  cacheSize:
-                    default: 20Gi
-                    description: CacheSize is the size of the engine cache
-                    type: string
-                  debug:
-                    default: true
-                    description: Debug set the engine log level to debug.
-                    type: boolean
-                  insecureRootCapabilities:
-                    default: true
-                    description: InsecureRootCapabilities allows root containers.
-                    type: boolean
-                  magicache:
-                    description: MagicacheSecret is the secret for experimental cachin
-                    type: string
-                  memory:
-                    default: 1Gi
-                    description: Memory is the pipeline memory size.
-                    type: string
-                  storageEnabled:
-                    default: true
-                    description: |-
-                      StorageEnabled enables the creation of a persistent volume
-                      for the engine cache.
-                    type: boolean
                 type: object
               module:
                 description: Module is the pipeline module
@@ -138,27 +108,27 @@ spec:
                 - revision
                 type: object
               retentionPeriodDays:
-                default: 3
-                description: |-
-                  RetentionPeriodDays is the number of days that pipeline jobs
-                  will be retained.
+                description: RetentionPeriodDays is the number of days that pipeline
+                  jobs
                 type: integer
+              revision:
+                description: |-
+                  Revision is the target commit sha in the application
+                  repository
+                type: string
             required:
             - application
             - module
+            - retentionPeriodDays
+            - revision
             type: object
           status:
-            description: RunnerStatus defines the observed state of Runner
+            description: PipelineJobStatus defines the observed state of PipelineJob
             properties:
-              checksum:
-                description: Checksum is the last synced source repository commit
-                  sha
-                type: string
               state:
-                description: State contains the sync status of the runner
+                description: State contains the status of the pipeline job
                 type: string
             required:
-            - checksum
             - state
             type: object
         type: object

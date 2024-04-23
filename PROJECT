@@ -16,4 +16,12 @@ resources:
   kind: Runner
   path: cacidy.io/runner/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: cacidy.io
+  kind: PipelineJob
+  path: cacidy.io/runner/api/v1alpha1
+  version: v1alpha1
 version: "3"

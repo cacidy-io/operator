@@ -1,16 +1,21 @@
 #!/bin/sh
 
+set -e
+
 function clone_app() {
     app_auth=""
     if [ ! -z $APP_PASSWORD ]; then app_auth="${APP_USERNAME}:${APP_PASSWORD}@"; fi
-    git clone --quiet -b ${APP_BRANCH} --depth 1 --single-branch ${app_auth}${APP_URL} /src
+    git config --global --add safe.directory /src
+    git clone --quiet --depth 1 ${APP_URL/\/\////$app_auth} /src && cd /src
+    git fetch --quiet --depth 1 origin ${APP_REVISION}
+    git checkout --quiet ${APP_REVISION}
 }
 
 function clone_module() {
     module_auth=""
     if [ ! -z $MODULE_PASSWORD ]; then module_auth="${MODULE_USERNAME}:${MODULE_PASSWORD}@"; fi
     git config --global --add safe.directory /module
-    git clone --quiet --depth 1 ${module_auth}${MODULE_URL} /module && cd /module
+    git clone --quiet --depth 1 ${MODULE_URL/\/\////$module_auth} /module && cd /module
     git fetch --quiet --depth 1 origin ${MODULE_REVISION}
     git checkout --quiet ${MODULE_REVISION}
 }
@@ -28,7 +33,7 @@ function main() {
     echo -e "\e[32mFunction:\e[0m    ${MODULE_FUNCTION}"
     echo -e "\e[32mEngine:\e[0m      ${DAGGER_ENGINE_NAMESPACE}/${DAGGER_ENGINE_POD_NAME}"
     echo ""
-    echo "starting pipelinge..."
+    echo "starting pipeline..."
     clone_app
     clone_module
     call

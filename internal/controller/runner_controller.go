@@ -23,14 +23,20 @@ import (
 	"time"
 
 	cacidyiov1alpha1 "cacidy.io/runner/api/v1alpha1"
+	"cacidy.io/runner/internal/controller/pipeline"
+	"cacidy.io/runner/internal/controller/runner"
+	"cacidy.io/runner/internal/controller/util"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+// runnerRequeueInterval .
+const runnerRequeueInterval = 10
 
 type statusReason string
 
@@ -45,7 +51,6 @@ const (
 type RunnerReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	runner *cacidyiov1alpha1.Runner
 }
 
 //+kubebuilder:rbac:groups=cacidy.io,resources=runners,verbs=get;list;watch;create;update;patch;delete
@@ -62,179 +67,147 @@ type RunnerReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.0/pkg/reconcile
 func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
-	runner := &cacidyiov1alpha1.Runner{}
-	if err := r.Get(ctx, req.NamespacedName, runner); apierrors.IsNotFound(err) {
-		log.Info(fmt.Sprintf("Runner '%s' was not found. The object may have been deleted", req.Name))
+	rnr := &cacidyiov1alpha1.Runner{}
+	if err := r.Get(ctx, req.NamespacedName, rnr); apierrors.IsNotFound(err) {
 		return ctrl.Result{}, nil
 	} else if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.addFinalizers(ctx, runner); err != nil {
-		log.Error(err, "failed adding runner finalizers")
+	if rnr.GetDeletionTimestamp() != nil {
+		if done, err := r.resolveFinalizers(ctx, req, rnr); err != nil {
+			return ctrl.Result{Requeue: true}, nil
+		} else if done {
+			return ctrl.Result{}, nil
+		}
+	}
+
+	if err := r.addFinalizers(ctx, rnr); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if requeue, err := r.syncAppChecksum(ctx, runner); err != nil {
-		log.Error(err, "failed syncing the application repository checksum")
-		return ctrl.Result{}, err
-	} else if requeue {
-		return ctrl.Result{}, nil
-	}
-
-	if err := r.deployEngine(req.Name, req.Namespace, runner); err != nil {
-		log.Error(err, "failed deploying engine")
-		return ctrl.Result{}, err
-	}
-
-	if err := r.resolveFinalizers(ctx, req, runner); err != nil {
-		log.Error(err, "failed resolving finalizers")
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if requeue, err := r.runPipeline(ctx, req, runner); err != nil {
-		log.Error(err, "failed running pipeline")
+	if requeue, err := r.syncAppChecksum(ctx, rnr); err != nil {
 		return ctrl.Result{}, err
 	} else if requeue {
 		return ctrl.Result{}, nil
 	}
 
-	if requeue, err := r.checkPipelineJobStatus(ctx, req, runner); err != nil {
-		log.Error(err, "failed checking the pipeline status")
+	if err := r.deployEngine(req.Name, req.Namespace, rnr); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if requeue, err := r.createPipelineJob(ctx, req, rnr); err != nil {
 		return ctrl.Result{}, err
 	} else if requeue {
 		return ctrl.Result{}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: time.Second * appCheckumInterval}, nil
+	return ctrl.Result{RequeueAfter: time.Second * runnerRequeueInterval}, nil
 }
 
-func (r *RunnerReconciler) addFinalizers(ctx context.Context, runner *cacidyiov1alpha1.Runner) error {
-	if !controllerutil.ContainsFinalizer(runner, engineFinalizer) {
-		if ok := controllerutil.AddFinalizer(runner, engineFinalizer); !ok {
+// addFinalizers adds the deletion finalizers to the runner.
+func (r *RunnerReconciler) addFinalizers(ctx context.Context, rnr *cacidyiov1alpha1.Runner) error {
+	if !controllerutil.ContainsFinalizer(rnr, runner.EngineFinalizer) {
+		if ok := controllerutil.AddFinalizer(rnr, runner.EngineFinalizer); !ok {
 			return errors.New("failed adding engine finalizer")
 		}
-		if err := r.Update(ctx, runner); err != nil {
+		if err := r.Update(ctx, rnr); err != nil {
 			return fmt.Errorf("%s failed to update runner while adding finalizer", err.Error())
 		}
 	}
 	return nil
 }
 
-func (r *RunnerReconciler) resolveFinalizers(ctx context.Context, req ctrl.Request, runner *cacidyiov1alpha1.Runner) error {
-	if runner.GetDeletionTimestamp() != nil {
-		if controllerutil.ContainsFinalizer(runner, engineFinalizer) {
-			if err := r.destroyEngine(req.Name, req.Namespace, runner); err != nil {
-				return err
-			}
-			if ok := controllerutil.RemoveFinalizer(runner, engineFinalizer); !ok {
-				return errors.New("failed removing finalizer")
-			}
-			if err := r.Update(ctx, runner); err != nil {
-				return err
-			}
-			return nil
-
+// resolveFinalizers resolves active finalizers before deletion.
+func (r *RunnerReconciler) resolveFinalizers(ctx context.Context, req ctrl.Request, rnr *cacidyiov1alpha1.Runner) (bool, error) {
+	done := false
+	if controllerutil.ContainsFinalizer(rnr, runner.EngineFinalizer) {
+		if err := r.destroyEngine(req.Name, req.Namespace, rnr); err != nil {
+			return false, err
+		}
+		if ok := controllerutil.RemoveFinalizer(rnr, runner.EngineFinalizer); !ok {
+			return false, errors.New("failed removing finalizer")
+		}
+		if err := r.Update(ctx, rnr); err != nil {
+			return false, err
 		}
 	}
-	return nil
+	done = true
+	return done, nil
 }
 
-func (r *RunnerReconciler) syncAppChecksum(ctx context.Context, runner *cacidyiov1alpha1.Runner) (bool, error) {
-	app := newApplication(&runner.Spec.Application)
-	appAuth, err := gitAuth()
+// syncAppChecksum gets the latest commit hash from the repository.
+func (r *RunnerReconciler) syncAppChecksum(ctx context.Context, rnr *cacidyiov1alpha1.Runner) (bool, error) {
+	var appAuth transport.AuthMethod
+	requeue := false
+	app := runner.NewApplication(&rnr.Spec.Application)
+	authSecret, err := util.GetAuthSecret(r.Client, ctx, rnr.Spec.Application.AuthSecret, rnr.Namespace)
 	if err != nil {
-		return false, err
+		return requeue, err
 	}
-	checksum, err := app.getChecksum(appAuth)
+	if authSecret != nil {
+		appAuth = util.GitAuth(authSecret)
+	}
+	checksum, err := app.GetChecksum(appAuth)
 	if err != nil {
-		return false, err
+		return requeue, err
 	}
-	if runner.Status.Checksum == checksum {
-		return false, nil
-	} else if runner.Status.Checksum == "" {
-		runner.Status.State = cacidyiov1alpha1.Ready
-	} else if runner.Status.Checksum != checksum {
-		runner.Status.State = cacidyiov1alpha1.OutOfSync
+	if rnr.Status.Checksum == checksum {
+		return requeue, nil
 	}
-	runner.Status.Checksum = checksum
+	requeue = true
+	if rnr.Status.State == "" {
+		rnr.Status.State = cacidyiov1alpha1.RunnerSynced
+	} else {
+		rnr.Status.State = cacidyiov1alpha1.RunnerOutOfSync
+	}
+	rnr.Status.Checksum = checksum
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		return r.Status().Update(ctx, runner)
+		return r.Status().Update(ctx, rnr)
 	})
 	if err != nil {
-		return true, nil
+		return requeue, err
 	}
-	return true, nil
+	return requeue, nil
 }
 
-func (r *RunnerReconciler) deployEngine(name, namespace string, runner *cacidyiov1alpha1.Runner) error {
-	eng := newEngine(name, namespace, runner.Spec.Engine)
-	return eng.deploy(r.Client, context.Background())
+// deployEngine installs an instance of the engine.
+func (r *RunnerReconciler) deployEngine(name, namespace string, rnr *cacidyiov1alpha1.Runner) error {
+	eng := runner.New(name, namespace, rnr.Spec.Engine)
+	return eng.Deploy(r.Client, context.Background())
 }
 
-func (r *RunnerReconciler) destroyEngine(name, namespace string, runner *cacidyiov1alpha1.Runner) error {
-	eng := newEngine(name, namespace, runner.Spec.Engine)
-	return eng.destroy(r.Client, context.Background())
+// destroyEngine deletes an installed instance of the engine.
+func (r *RunnerReconciler) destroyEngine(name, namespace string, rnr *cacidyiov1alpha1.Runner) error {
+	eng := runner.New(name, namespace, rnr.Spec.Engine)
+	return eng.Destroy(r.Client, context.Background())
 }
 
-func (r *RunnerReconciler) runPipeline(ctx context.Context, req ctrl.Request, runner *cacidyiov1alpha1.Runner) (bool, error) {
-	if runner.Status.State != cacidyiov1alpha1.OutOfSync {
-		return false, nil
+// createPipelineJob creates a new pipeline job resource.
+func (r *RunnerReconciler) createPipelineJob(ctx context.Context, req ctrl.Request, rnr *cacidyiov1alpha1.Runner) (bool, error) {
+	requeue := false
+	if rnr.Status.State != cacidyiov1alpha1.RunnerOutOfSync {
+		return requeue, nil
 	}
-	eng := newEngine(req.Name, req.Namespace, runner.Spec.Engine)
-	podName, err := eng.podName(r.Client, context.Background())
-	if err != nil {
-		return false, err
+	job := pipeline.NewJob(pipeline.JobOptions{
+		AppName:             req.Name,
+		Namespace:           req.Namespace,
+		Revision:            rnr.Status.Checksum,
+		Module:              rnr.Spec.Module,
+		Application:         rnr.Spec.Application,
+		RetentionPeriodDays: rnr.Spec.RetentionPeriodDays,
+	})
+	if err := r.Create(ctx, job); err != nil {
+		return requeue, err
 	}
-	job := pipelineJob{
-		Name:          req.Name,
-		Namespace:     req.Namespace,
-		EnginePodName: podName,
-		Checksum:      runner.Status.Checksum,
-		appSpec:       runner.Spec.Application,
-		moduleSpec:    runner.Spec.Module,
-	}
-	runner.Status.State = cacidyiov1alpha1.Running
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		return r.Status().Update(ctx, runner)
+	rnr.Status.State = cacidyiov1alpha1.RunnerSynced
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		return r.Status().Update(ctx, rnr)
 	})
 	if err != nil {
-		return true, nil
+		return requeue, err
 	}
-	return true, job.run(r.Client, context.Background())
-}
-
-func (r *RunnerReconciler) checkPipelineJobStatus(ctx context.Context, req ctrl.Request, runner *cacidyiov1alpha1.Runner) (bool, error) {
-	if runner.Status.State != cacidyiov1alpha1.Running {
-		return false, nil
-	}
-	job := pipelineJob{
-		Name:      req.Name,
-		Namespace: req.Namespace,
-		Checksum:  runner.Status.Checksum,
-	}
-	status, err := job.status(r.Client, ctx)
-	if err != nil {
-		return false, err
-	}
-	if status == pendingJobStatus {
-		return false, nil
-	}
-	if status == failedJobStatus {
-		runner.Status.State = cacidyiov1alpha1.Failed
-	}
-	if status == completeJobStatus {
-		runner.Status.State = cacidyiov1alpha1.Complete
-	}
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		return r.Status().Update(ctx, runner)
-	})
-	if err != nil {
-		return true, nil
-	}
-	return true, nil
+	return requeue, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

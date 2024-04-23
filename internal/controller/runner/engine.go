@@ -1,4 +1,4 @@
-package controller
+package runner
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 const (
 	engineVersion    = "v0.11.0"
 	engineContainer  = "registry.dagger.io/engine"
-	engineFinalizer  = "finalizer.engine.cacidy.io"
+	EngineFinalizer  = "finalizer.engine.cacidy.io"
 	engineConfigPath = "/etc/dagger/engine.toml"
 	buildkitBasePath = "/etc/buildkit"
 	magicacheURL     = "https://api.dagger.cloud/magicache"
@@ -259,7 +259,7 @@ func (eng *engine) getObjects() ([]client.Object, error) {
 	}, nil
 }
 
-func (eng *engine) deploy(cli client.Client, ctx context.Context) error {
+func (eng *engine) Deploy(cli client.Client, ctx context.Context) error {
 	resources, err := eng.getObjects()
 	if err != nil {
 		return err
@@ -278,7 +278,7 @@ func (eng *engine) deploy(cli client.Client, ctx context.Context) error {
 	return nil
 }
 
-func (eng *engine) destroy(cli client.Client, ctx context.Context) error {
+func (eng *engine) Destroy(cli client.Client, ctx context.Context) error {
 	resources, err := eng.getObjects()
 	if err != nil {
 		return err
@@ -291,11 +291,13 @@ func (eng *engine) destroy(cli client.Client, ctx context.Context) error {
 	return nil
 }
 
-func (eng *engine) podName(cli client.Client, ctx context.Context) (string, error) {
+func (eng *engine) PodName(cli client.Client, ctx context.Context) (string, error) {
 	list := &corev1.PodList{}
-	if err := cli.List(ctx, list, &client.ListOptions{LabelSelector: labels.SelectorFromSet(map[string]string{
-		"app": eng.metaName(),
-	})}); err != nil {
+	if err := cli.List(ctx, list, &client.ListOptions{
+		LabelSelector: labels.SelectorFromSet(map[string]string{
+			"app": eng.metaName(),
+		}),
+	}); err != nil {
 		return "", fmt.Errorf("%s failed getting the engine deployment", err.Error())
 	}
 	if len(list.Items) < 1 {
@@ -304,6 +306,10 @@ func (eng *engine) podName(cli client.Client, ctx context.Context) (string, erro
 	return list.Items[0].Name, nil
 }
 
-func newEngine(name, namespace string, settings cacidyiov1alpha1.RunnerEngineSettings) *engine {
-	return &engine{Name: name, Namespace: namespace, Settings: settings}
+func New(name, namespace string, settings ...cacidyiov1alpha1.RunnerEngineSettings) *engine {
+	eng := &engine{Name: name, Namespace: namespace}
+	if len(settings) > 0 {
+		eng.Settings = settings[0]
+	}
+	return eng
 }

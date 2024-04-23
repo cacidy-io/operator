@@ -1,0 +1,12 @@
+apiVersion: cacidy.io/v1alpha1
+kind: PipelineJob
+metadata:
+  labels:
+    app.kubernetes.io/name: pipelinejob
+    app.kubernetes.io/instance: pipelinejob-sample
+    app.kubernetes.io/part-of: cacidy
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: cacidy
+  name: pipelinejob-sample
+spec:
+  # TODO(user): Add fields here

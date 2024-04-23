@@ -1,4 +1,4 @@
-package controller
+package runner
 
 import (
 	"errors"
@@ -11,25 +11,21 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
-const (
-	appCheckumInterval = 10
-)
-
-type application struct {
-	Repository       string
-	Branch           string
-	RepositorySecret string
+type Application struct {
+	Repository string
+	Branch     string
+	AuthSecret string
 }
 
-func newApplication(spec *cacidyiov1alpha1.RunnerSpecApplication) *application {
-	return &application{
-		Repository:       spec.Repository,
-		Branch:           spec.Branch,
-		RepositorySecret: spec.RepositorySecret,
+func NewApplication(spec *cacidyiov1alpha1.Application) *Application {
+	return &Application{
+		Repository: spec.Repository,
+		Branch:     spec.Branch,
+		AuthSecret: spec.AuthSecret,
 	}
 }
 
-func (app *application) getChecksum(auth transport.AuthMethod) (string, error) {
+func (app *Application) GetChecksum(auth transport.AuthMethod) (string, error) {
 	remote := git.NewRemote(memory.NewStorage(), &config.RemoteConfig{
 		Name: "origin",
 		URLs: []string{app.Repository},
@@ -40,7 +36,7 @@ func (app *application) getChecksum(auth transport.AuthMethod) (string, error) {
 	}
 	for _, ref := range refs {
 		if ref.Name().String() == fmt.Sprintf("refs/heads/%s", app.Branch) {
-			return ref.Hash().String()[:7], nil
+			return ref.Hash().String(), nil
 		}
 	}
 	return "", errors.New("checksum not found")
