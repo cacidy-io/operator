@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	cacidyiov1alpha1 "cacidy.io/runner/api/v1alpha1"
+	cacidyiov1alpha1 "github.com/cacidy-io/operator/api/v1alpha1"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/transport"

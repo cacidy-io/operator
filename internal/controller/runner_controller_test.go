@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	cacidyiov1alpha1 "cacidy.io/runner/api/v1alpha1"
+	cacidyiov1alpha1 "github.com/cacidy-io/operator/api/v1alpha1"
 )
 
 var _ = Describe("Runner Controller", func() {

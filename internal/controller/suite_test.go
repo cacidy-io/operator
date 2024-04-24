@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	cacidyiov1alpha1 "cacidy.io/runner/api/v1alpha1"
+	cacidyiov1alpha1 "github.com/cacidy-io/operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

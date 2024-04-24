@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"cacidy.io/runner/test/utils"
+	"github.com/cacidy-io/operator/test/utils"
 )
 
 const namespace = "cacidy-system"

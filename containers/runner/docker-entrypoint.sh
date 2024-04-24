@@ -2,6 +2,17 @@
 
 set -e
 
+function print_meta() {
+    echo "Cacidy Runner (v0.1.0-alpha)"
+    echo ""
+    echo -e "\e[32mApplication:\e[0m ${APP_URL}:${APP_BRANCH}" 
+    echo -e "\e[32mModule:\e[0m      ${MODULE_URL}/commit/${MODULE_REVISION}"
+    echo -e "\e[32mFunction:\e[0m    ${MODULE_FUNCTION}"
+    echo -e "\e[32mEngine:\e[0m      ${DAGGER_ENGINE_NAMESPACE}/${DAGGER_ENGINE_POD_NAME}"
+    echo ""
+    echo "starting pipeline..."
+}
+
 function clone_app() {
     app_auth=""
     if [ ! -z $APP_PASSWORD ]; then app_auth="${APP_USERNAME}:${APP_PASSWORD}@"; fi
@@ -26,14 +37,7 @@ function call() {
 }
 
 function main() {
-    echo "Cacidy Runner (v0.1.0-alpha)"
-    echo ""
-    echo -e "\e[32mApplication:\e[0m ${APP_URL}:${APP_BRANCH}" 
-    echo -e "\e[32mModule:\e[0m      ${MODULE_URL}/commit/${MODULE_REVISION}"
-    echo -e "\e[32mFunction:\e[0m    ${MODULE_FUNCTION}"
-    echo -e "\e[32mEngine:\e[0m      ${DAGGER_ENGINE_NAMESPACE}/${DAGGER_ENGINE_POD_NAME}"
-    echo ""
-    echo "starting pipeline..."
+    print_meta
     clone_app
     clone_module
     call

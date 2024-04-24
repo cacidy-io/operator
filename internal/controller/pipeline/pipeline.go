@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	cacidyiov1alpha1 "cacidy.io/runner/api/v1alpha1"
+	cacidyiov1alpha1 "github.com/cacidy-io/operator/api/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"

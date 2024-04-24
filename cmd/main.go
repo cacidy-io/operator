@@ -35,8 +35,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	cacidyiov1alpha1 "cacidy.io/runner/api/v1alpha1"
-	"cacidy.io/runner/internal/controller"
+	cacidyiov1alpha1 "github.com/cacidy-io/operator/api/v1alpha1"
+	"github.com/cacidy-io/operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 

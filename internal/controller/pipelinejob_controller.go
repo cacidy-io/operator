@@ -25,9 +25,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	cacidyiov1alpha1 "cacidy.io/runner/api/v1alpha1"
-	"cacidy.io/runner/internal/controller/pipeline"
-	"cacidy.io/runner/internal/controller/runner"
+	cacidyiov1alpha1 "github.com/cacidy-io/operator/api/v1alpha1"
+	"github.com/cacidy-io/operator/internal/controller/pipeline"
+	"github.com/cacidy-io/operator/internal/controller/runner"
 )
 
 const pipelineJobRequeueInterval = 3

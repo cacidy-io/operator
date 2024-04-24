@@ -6,7 +6,7 @@ domain: cacidy.io
 layout:
 - go.kubebuilder.io/v4
 projectName: cacidy
-repo: cacidy.io/runner
+repo: github.com/cacidy-io/operator
 resources:
 - api:
     crdVersion: v1
@@ -14,7 +14,7 @@ resources:
   controller: true
   domain: cacidy.io
   kind: Runner
-  path: cacidy.io/runner/api/v1alpha1
+  path: github.com/cacidy-io/operator/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -22,6 +22,5 @@ resources:
   controller: true
   domain: cacidy.io
   kind: PipelineJob
-  path: cacidy.io/runner/api/v1alpha1
+  path: github.com/cacidy-io/operator/api/v1alpha1
   version: v1alpha1
-version: "3"
