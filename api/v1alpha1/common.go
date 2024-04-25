@@ -5,6 +5,12 @@ type PipelineModule struct {
 	// from the module
 	Function string `json:"function"`
 
+	// SourceAs is the source code path argument for the module
+	// function call.
+	// +kubebuilder:default:=source
+	// +kubebuilder:validation:Optional
+	SourceAs string `json:"sourceArg,omitempty"`
+
 	// Args is the name of a secret that contains the function
 	// arguments
 	// +kubebuilder:validation:Optional

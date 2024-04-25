@@ -33,7 +33,7 @@ function clone_module() {
 
 function call() {
     export _EXPERIMENTAL_DAGGER_RUNNER_HOST=kube-pod://${DAGGER_ENGINE_POD_NAME}?namespace=${DAGGER_ENGINE_NAMESPACE}
-    dagger call --source /src ${MODULE_FUNCTION_ARGS} ${MODULE_FUNCTION}
+    dagger call --$MODULE_SOURCE_AS /src ${MODULE_FUNCTION_ARGS} ${MODULE_FUNCTION}
 }
 
 function main() {

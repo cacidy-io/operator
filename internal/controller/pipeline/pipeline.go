@@ -120,6 +120,10 @@ func (pipe *Pipeline) jobEnv() []corev1.EnvVar {
 			Name:  "DAGGER_ENGINE_POD_NAME",
 			Value: pipe.EnginePodName,
 		},
+		{
+			Name:  "MODULE_SOURCE_AS",
+			Value: pipe.Module.SourceAs,
+		},
 	}
 	if pipe.Application.AuthSecret != "" {
 		env = append(env, []corev1.EnvVar{

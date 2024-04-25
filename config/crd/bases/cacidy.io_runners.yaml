@@ -132,13 +132,19 @@ spec:
                   revision:
                     description: Revision is the commit sha of the repository branch
                     type: string
+                  sourceArg:
+                    default: source
+                    description: |-
+                      SourceAs is the source code path argument for the module
+                      function call.
+                    type: string
                 required:
                 - function
                 - repository
                 - revision
                 type: object
               retentionPeriodDays:
-                default: 3
+                default: 7
                 description: |-
                   RetentionPeriodDays is the number of days that pipeline jobs
                   will be retained.

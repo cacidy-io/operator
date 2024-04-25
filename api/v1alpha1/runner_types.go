@@ -8,23 +8,23 @@ type RunnerEngineSettings struct {
 	// Debug set the engine log level to debug.
 	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
-	Debug bool `json:"debug"`
+	Debug bool `json:"debug,omitempty"`
 
 	// InsecureRootCapabilities allows root containers.
 	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
-	InsecureRootCapabilities bool `json:"insecureRootCapabilities"`
+	InsecureRootCapabilities bool `json:"insecureRootCapabilities,omitempty"`
 
 	// StorageEnabled enables the creation of a persistent volume
 	// for the engine cache.
 	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
-	StorageEnabled bool `json:"storageEnabled"`
+	StorageEnabled bool `json:"storageEnabled,omitempty"`
 
 	// CacheSize is the size of the engine cache
 	// +kubebuilder:default="20Gi"
 	// +kubebuilder:validation:Optional
-	CacheSize string `json:"cacheSize"`
+	CacheSize string `json:"cacheSize,omitempty"`
 
 	// MagicacheSecret is the secret for experimental cachin
 	// +kubebuilder:validation:Optional
@@ -33,7 +33,7 @@ type RunnerEngineSettings struct {
 	// Memory is the pipeline memory size.
 	// +kubebuilder:default:="1Gi"
 	// +kubebuilder:validation:Optional
-	Memory string `json:"memory"`
+	Memory string `json:"memory,omitempty"`
 }
 
 // RunnerSpec defines the desired state of Runner
@@ -51,9 +51,9 @@ type RunnerSpec struct {
 
 	// RetentionPeriodDays is the number of days that pipeline jobs
 	// will be retained.
-	// +kubebuilder:default:=3
+	// +kubebuilder:default:=7
 	// +kubebuilder:validation:Optional
-	RetentionPeriodDays int `json:"retentionPeriodDays"`
+	RetentionPeriodDays int `json:"retentionPeriodDays,omitempty"`
 }
 
 type runnerState string
