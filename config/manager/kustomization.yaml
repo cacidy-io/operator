@@ -4,5 +4,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: ttl.sh/8ca91ecc-865a-4846-ba6a-d07009ab1797
-  newTag: 1h
+  newName: controller
+  newTag: latest

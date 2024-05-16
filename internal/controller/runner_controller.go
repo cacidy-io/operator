@@ -56,6 +56,10 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups=cacidy.io,resources=runners,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cacidy.io,resources=runners/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=cacidy.io,resources=runners/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=create;update;delete
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=create;update;delete
+//+kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=create;update;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

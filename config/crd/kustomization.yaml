@@ -4,7 +4,6 @@
 resources:
 - bases/cacidy.io_runners.yaml
 - bases/cacidy.io_pipelinejobs.yaml
-- bases/cacidy.io_artifactregistries.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

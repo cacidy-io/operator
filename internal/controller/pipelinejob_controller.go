@@ -41,6 +41,10 @@ type PipelineJobReconciler struct {
 //+kubebuilder:rbac:groups=cacidy.io,resources=pipelinejobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cacidy.io,resources=pipelinejobs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=cacidy.io,resources=pipelinejobs/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=create;update;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=create;update;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=create;update;delete
+//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=create;update;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

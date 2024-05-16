@@ -89,46 +89,42 @@ func (pipe *Pipeline) rolebinding() *rbacv1.RoleBinding {
 func (pipe *Pipeline) jobEnv() []corev1.EnvVar {
 	env := []corev1.EnvVar{
 		{
-			Name:  "APP_URL",
+			Name:  "CACIDY_APPLICATION_URL",
 			Value: pipe.Application.Repository,
 		},
 		{
-			Name:  "APP_BRANCH",
-			Value: pipe.Application.Branch,
-		},
-		{
-			Name:  "APP_REVISION",
+			Name:  "CACIDY_APPLICATION_REVISION",
 			Value: pipe.Revision,
 		},
 		{
-			Name:  "MODULE_URL",
+			Name:  "CACIDY_MODULE_URL",
 			Value: pipe.Module.Repository,
 		},
 		{
-			Name:  "MODULE_REVISION",
+			Name:  "CACIDY_MODULE_REVISION",
 			Value: pipe.Module.Revision,
 		},
 		{
-			Name:  "MODULE_FUNCTION",
+			Name:  "CACIDY_CALL_FUNCTION",
 			Value: pipe.Module.Function,
 		},
 		{
-			Name:  "DAGGER_ENGINE_NAMESPACE",
-			Value: pipe.Namespace,
+			Name:  "CACIDY_CALL_SOURCE_AS",
+			Value: pipe.Module.SourceAs,
 		},
 		{
-			Name:  "DAGGER_ENGINE_POD_NAME",
+			Name:  "CACIDY_DAGGER_ENGINE_POD_NAME",
 			Value: pipe.EnginePodName,
 		},
 		{
-			Name:  "MODULE_SOURCE_AS",
-			Value: pipe.Module.SourceAs,
+			Name:  "CACIDY_DAGGER_ENGINE_NAMESPACE",
+			Value: pipe.Namespace,
 		},
 	}
 	if pipe.Application.AuthSecret != "" {
 		env = append(env, []corev1.EnvVar{
 			{
-				Name: "APP_USERNAME",
+				Name: "CACIDY_APPLICATION_USERNAME",
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
@@ -139,7 +135,7 @@ func (pipe *Pipeline) jobEnv() []corev1.EnvVar {
 				},
 			},
 			{
-				Name: "APP_PASSWORD",
+				Name: "CACIDY_APPLICATION_PASSWORD",
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
@@ -154,7 +150,7 @@ func (pipe *Pipeline) jobEnv() []corev1.EnvVar {
 	if pipe.Module.AuthSecret != "" {
 		env = append(env, []corev1.EnvVar{
 			{
-				Name: "MODULE_USERNAME",
+				Name: "CACIDY_MODULE_USERNAME",
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
@@ -165,7 +161,7 @@ func (pipe *Pipeline) jobEnv() []corev1.EnvVar {
 				},
 			},
 			{
-				Name: "MODULE_PASSWORD",
+				Name: "CACIDY_MODULE_PASSWORD",
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
