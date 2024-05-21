@@ -9,12 +9,12 @@ type PipelineModule struct {
 	// function call.
 	// +kubebuilder:default:=source
 	// +kubebuilder:validation:Optional
-	SourceAs string `json:"sourceArg,omitempty"`
+	SourceAs string `json:"sourceAs,omitempty"`
 
 	// Args is the name of a secret that contains the function
 	// arguments
 	// +kubebuilder:validation:Optional
-	Args string `json:"args,omitempty"`
+	Args []string `json:"args,omitempty"`
 
 	// Repository is the http(s) url of the git repository
 	Repository string `json:"repository"`

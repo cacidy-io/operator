@@ -132,7 +132,7 @@ spec:
                   revision:
                     description: Revision is the commit sha of the repository branch
                     type: string
-                  sourceArg:
+                  sourceAs:
                     default: source
                     description: |-
                       SourceAs is the source code path argument for the module
