@@ -106,7 +106,7 @@ spec:
               module:
                 description: Module is the pipeline module
                 properties:
-                  args:
+                  arguments:
                     description: |-
                       Args is the name of a secret that contains the function
                       arguments

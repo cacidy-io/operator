@@ -19,7 +19,7 @@ type PipelineModule struct {
 	// Args is the name of a secret that contains the function
 	// arguments
 	// +kubebuilder:validation:Optional
-	Args []PipelineModuleArg `json:"args,omitempty"`
+	Args []PipelineModuleArg `json:"arguments,omitempty"`
 
 	// Repository is the http(s) url of the git repository
 	Repository string `json:"repository"`
