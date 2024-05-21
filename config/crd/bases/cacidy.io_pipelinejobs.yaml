@@ -80,7 +80,17 @@ spec:
                     description: |-
                       Args is the name of a secret that contains the function
                       arguments
-                    type: string
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - name
+                      - value
+                      type: object
+                    type: array
                   authSecret:
                     description: |-
                       AuthSecret is the name of a secret that contains the

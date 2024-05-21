@@ -178,20 +178,11 @@ func (pipe *Pipeline) jobEnv() []corev1.EnvVar {
 
 func (pipe *Pipeline) jobEnvFrom() []corev1.EnvFromSource {
 	envFrom := []corev1.EnvFromSource{}
-	if pipe.Module.Args != "" {
-		envFrom = append(envFrom, corev1.EnvFromSource{
-			SecretRef: &corev1.SecretEnvSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: pipe.Module.CloudTokenSecret,
-				},
-			},
-		})
-	}
 	if pipe.Module.CloudTokenSecret != "" {
 		envFrom = append(envFrom, corev1.EnvFromSource{
 			SecretRef: &corev1.SecretEnvSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: fmt.Sprintf(pipe.Module.CloudTokenSecret),
+					Name: pipe.Module.CloudTokenSecret,
 				},
 			},
 		})
