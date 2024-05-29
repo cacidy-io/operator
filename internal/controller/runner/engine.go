@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	engineVersion    = "v0.11.0"
+	engineVersion    = "v0.11.4"
 	engineContainer  = "registry.dagger.io/engine"
 	EngineFinalizer  = "finalizer.engine.cacidy.io"
 	engineConfigPath = "/etc/dagger/engine.toml"

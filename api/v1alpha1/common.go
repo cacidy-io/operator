@@ -27,11 +27,6 @@ type PipelineModule struct {
 	// Revision is the commit sha of the repository branch
 	Revision string `json:"revision"`
 
-	// AuthSecret is the name of a secret that contains the
-	// repository username and password
-	// +kubebuilder:validation:Optional
-	AuthSecret string `json:"authSecret,omitempty"`
-
 	// CloudTokenSecret is the token for pipeline observability using
 	// dagger cloud.
 	// +kubebuilder:validation:Optional
@@ -49,8 +44,8 @@ type Application struct {
 	// +kubebuilder:validation:Optional
 	Branch string `json:"branch"`
 
-	// AuthSecret is the name of a secret that contains the
-	// repository username and password
+	// SecretStore is the external secrets operator secret store
+	// for the application.
 	// +kubebuilder:validation:Optional
-	AuthSecret string `json:"authSecret,omitempty"`
+	SecretStore string `json:"secretStore,omitempty"`
 }

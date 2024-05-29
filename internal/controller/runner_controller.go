@@ -145,7 +145,7 @@ func (r *RunnerReconciler) syncAppChecksum(ctx context.Context, rnr *cacidyiov1a
 	var appAuth transport.AuthMethod
 	requeue := false
 	app := runner.NewApplication(&rnr.Spec.Application)
-	authSecret, err := util.GetAuthSecret(r.Client, ctx, rnr.Spec.Application.AuthSecret, rnr.Namespace)
+	authSecret, err := util.GetAuthSecret(r.Client, ctx, rnr.Spec.Application.SecretStore, rnr.Namespace)
 	if err != nil {
 		return requeue, err
 	}

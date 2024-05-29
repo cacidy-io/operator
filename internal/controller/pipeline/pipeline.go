@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -17,8 +18,11 @@ import (
 )
 
 const (
-	pipelineContainerImage = "cacidy/runner:v0.1.0"
-	pipelineJobRole        = "cacidy-pipeline-job"
+	containerImage = "cacidy/runner:v0.1.0"
+	jobRole        = "cacidy-pipeline-job"
+	cpuRequest     = "15m"
+	memoryRequest  = "128Mi"
+	memoryLimit    = "256Mi"
 )
 
 type Pipeline struct {
@@ -38,7 +42,7 @@ func (pipe *Pipeline) name() string {
 func (pipe *Pipeline) serviceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pipelineJobRole,
+			Name:      jobRole,
 			Namespace: pipe.Namespace,
 		},
 	}
@@ -47,7 +51,7 @@ func (pipe *Pipeline) serviceAccount() *corev1.ServiceAccount {
 func (pipe *Pipeline) role() *rbacv1.Role {
 	return &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pipelineJobRole,
+			Name:      jobRole,
 			Namespace: pipe.Namespace,
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -68,110 +72,69 @@ func (pipe *Pipeline) role() *rbacv1.Role {
 func (pipe *Pipeline) rolebinding() *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pipelineJobRole,
+			Name:      jobRole,
 			Namespace: pipe.Namespace,
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      pipelineJobRole,
+				Name:      jobRole,
 				Namespace: pipe.Namespace,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
 			Kind:     "Role",
-			Name:     pipelineJobRole,
+			Name:     jobRole,
 			APIGroup: "rbac.authorization.k8s.io",
 		},
 	}
 }
 
 func (pipe *Pipeline) jobEnv() []corev1.EnvVar {
+	var args string
+	argsData, _ := json.Marshal(pipe.Module.Args)
+	if argsData == nil {
+		args = ""
+	} else {
+		args = string(argsData)
+	}
 	env := []corev1.EnvVar{
 		{
-			Name:  "CACIDY_APPLICATION_URL",
+			Name:  "APP_SOURCE_URL",
 			Value: pipe.Application.Repository,
 		},
 		{
-			Name:  "CACIDY_APPLICATION_REVISION",
+			Name:  "APP_SOURCE_REVISION",
 			Value: pipe.Revision,
 		},
 		{
-			Name:  "CACIDY_MODULE_URL",
+			Name:  "MODULE_SOURCE_URL",
 			Value: pipe.Module.Repository,
 		},
 		{
-			Name:  "CACIDY_MODULE_REVISION",
+			Name:  "MODULE_SOURCE_REVISION",
 			Value: pipe.Module.Revision,
 		},
 		{
-			Name:  "CACIDY_CALL_FUNCTION",
+			Name:  "MODULE_CALL_FUNCTION",
 			Value: pipe.Module.Function,
 		},
 		{
-			Name:  "CACIDY_CALL_SOURCE_AS",
+			Name:  "MODULE_CALL_SOURCE_AS",
 			Value: pipe.Module.SourceAs,
 		},
 		{
-			Name:  "CACIDY_DAGGER_ENGINE_POD_NAME",
+			Name:  "MODULE_CALL_ARGUMENTS",
+			Value: args,
+		},
+		{
+			Name:  "DAGGER_ENGINE_POD_NAME",
 			Value: pipe.EnginePodName,
 		},
 		{
-			Name:  "CACIDY_DAGGER_ENGINE_NAMESPACE",
+			Name:  "DAGGER_ENGINE_NAMESPACE",
 			Value: pipe.Namespace,
 		},
-	}
-	if pipe.Application.AuthSecret != "" {
-		env = append(env, []corev1.EnvVar{
-			{
-				Name: "CACIDY_APPLICATION_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pipe.Application.AuthSecret,
-						},
-						Key: "username",
-					},
-				},
-			},
-			{
-				Name: "CACIDY_APPLICATION_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pipe.Application.AuthSecret,
-						},
-						Key: "password",
-					},
-				},
-			},
-		}...)
-	}
-	if pipe.Module.AuthSecret != "" {
-		env = append(env, []corev1.EnvVar{
-			{
-				Name: "CACIDY_MODULE_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pipe.Module.AuthSecret,
-						},
-						Key: "username",
-					},
-				},
-			},
-			{
-				Name: "CACIDY_MODULE_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pipe.Module.AuthSecret,
-						},
-						Key: "password",
-					},
-				},
-			},
-		}...)
 	}
 	return env
 }
@@ -183,6 +146,15 @@ func (pipe *Pipeline) jobEnvFrom() []corev1.EnvFromSource {
 			SecretRef: &corev1.SecretEnvSource{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: pipe.Module.CloudTokenSecret,
+				},
+			},
+		})
+	}
+	if pipe.Application.SecretStore != "" {
+		envFrom = append(envFrom, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: pipe.Application.SecretStore,
 				},
 			},
 		})
@@ -212,22 +184,22 @@ func (pipe *Pipeline) job() *batchv1.Job {
 						{
 							ImagePullPolicy: "Always",
 							Name:            "pipeline",
-							Image:           pipelineContainerImage,
+							Image:           containerImage,
 							Env:             pipe.jobEnv(),
 							EnvFrom:         pipe.jobEnvFrom(),
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("15m"),
-									"memory": resource.MustParse("64Mi"),
+									"cpu":    resource.MustParse(cpuRequest),
+									"memory": resource.MustParse(memoryRequest),
 								},
 								Limits: corev1.ResourceList{
-									"memory": resource.MustParse("256Mi"),
+									"memory": resource.MustParse(memoryLimit),
 								},
 							},
 						},
 					},
 					TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
-					ServiceAccountName:            pipelineJobRole,
+					ServiceAccountName:            jobRole,
 				},
 			},
 		},

@@ -12,16 +12,16 @@ import (
 )
 
 type Application struct {
-	Repository string
-	Branch     string
-	AuthSecret string
+	Repository  string
+	Branch      string
+	SecretStore string
 }
 
 func NewApplication(spec *cacidyiov1alpha1.Application) *Application {
 	return &Application{
-		Repository: spec.Repository,
-		Branch:     spec.Branch,
-		AuthSecret: spec.AuthSecret,
+		Repository:  spec.Repository,
+		Branch:      spec.Branch,
+		SecretStore: spec.SecretStore,
 	}
 }
 
