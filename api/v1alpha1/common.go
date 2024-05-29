@@ -44,8 +44,7 @@ type Application struct {
 	// +kubebuilder:validation:Optional
 	Branch string `json:"branch"`
 
-	// SecretStore is the external secrets operator secret store
-	// for the application.
+	// Secrets contains the application secrets
 	// +kubebuilder:validation:Optional
-	SecretStore string `json:"secretStore,omitempty"`
+	Secrets string `json:"secrets,omitempty"`
 }

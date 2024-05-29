@@ -25,7 +25,6 @@ import (
 	cacidyiov1alpha1 "github.com/cacidy-io/operator/api/v1alpha1"
 	"github.com/cacidy-io/operator/internal/controller/pipeline"
 	"github.com/cacidy-io/operator/internal/controller/runner"
-	"github.com/cacidy-io/operator/internal/controller/util"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -145,13 +144,13 @@ func (r *RunnerReconciler) syncAppChecksum(ctx context.Context, rnr *cacidyiov1a
 	var appAuth transport.AuthMethod
 	requeue := false
 	app := runner.NewApplication(&rnr.Spec.Application)
-	authSecret, err := util.GetAuthSecret(r.Client, ctx, rnr.Spec.Application.SecretStore, rnr.Namespace)
-	if err != nil {
-		return requeue, err
-	}
-	if authSecret != nil {
-		appAuth = util.GitAuth(authSecret)
-	}
+	// authSecret, err := util.GetAuthSecret(r.Client, ctx, rnr.Spec.Application.SecretStore, rnr.Namespace)
+	// if err != nil {
+	// 	return requeue, err
+	// }
+	// if authSecret != nil {
+	// 	appAuth = util.GitAuth(authSecret)
+	// }
 	checksum, err := app.GetChecksum(appAuth)
 	if err != nil {
 		return requeue, err

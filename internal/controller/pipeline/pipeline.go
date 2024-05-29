@@ -150,11 +150,11 @@ func (pipe *Pipeline) jobEnvFrom() []corev1.EnvFromSource {
 			},
 		})
 	}
-	if pipe.Application.SecretStore != "" {
+	if pipe.Application.Secrets != "" {
 		envFrom = append(envFrom, corev1.EnvFromSource{
 			SecretRef: &corev1.SecretEnvSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: pipe.Application.SecretStore,
+					Name: pipe.Application.Secrets,
 				},
 			},
 		})
