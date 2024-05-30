@@ -66,6 +66,10 @@ const (
 	// RunnerOutOfSync is the state of the application when a new
 	// commit is detected and a pipeline does not yet exist
 	RunnerOutOfSync runnerState = "OutOfSync"
+
+	// RunnerSyncFailed is the state of the application when the
+	// latest commit cannot be synced.
+	RunnerSyncFailed runnerState = "Failed"
 )
 
 // RunnerStatus defines the observed state of Runner

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/go:1-1.21-bookworm
+FROM mcr.microsoft.com/devcontainers/go:1-1.22-bookworm
 
 RUN curl -L -o kubebuilder "https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)" && \
     sudo chmod +x kubebuilder && \

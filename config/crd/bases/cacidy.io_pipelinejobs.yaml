@@ -65,10 +65,8 @@ spec:
                     x-kubernetes-validations:
                     - message: Repository is immutable
                       rule: self == oldSelf
-                  secretStore:
-                    description: |-
-                      SecretStore is the external secrets operator secret store
-                      for the application.
+                  secrets:
+                    description: Secrets contains the application secrets
                     type: string
                 required:
                 - repository

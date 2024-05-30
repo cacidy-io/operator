@@ -22,10 +22,13 @@ func GetAuthSecret(cli client.Client, ctx context.Context, name, namespace strin
 }
 
 func GitAuth(authSecret *v1.Secret) transport.AuthMethod {
+	if _, ok := authSecret.Data["APP_SOURCE_PASSWORD"]; !ok {
+		return nil
+	}
 	if authSecret != nil {
 		return &http.BasicAuth{
-			Username: string(authSecret.Data["username"]),
-			Password: string(authSecret.Data["password"]),
+			Username: string(authSecret.Data["APP_SOURCE_USERNAME"]),
+			Password: string(authSecret.Data["APP_SOURCE_PASSWORD"]),
 		}
 	}
 	return nil

@@ -104,6 +104,12 @@ rules:
   - patch
   - update
 - apiGroups:
+  - external-secrets.io
+  resources:
+  - externalsecrets
+  verbs:
+  - get
+- apiGroups:
   - rbac.authorization.k8s.io
   resources:
   - rolebindings

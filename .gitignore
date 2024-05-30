@@ -26,3 +26,7 @@ go.work
 *.swp
 *.swo
 *~
+
+
+# Ignore DevSpace cache and log folder
+.devspace/
